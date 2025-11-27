@@ -1,0 +1,28 @@
+services:
+    - name: "svc1"
+      listen_port: 80
+      balancer: "RoundRobin"
+
+      hosts:
+          - "example.com"
+          - "example.org"
+
+      upstreams:
+          - host: "http://localhost:8000"
+            health_uri: "/health"
+          - host: "http://localhost:9000"
+            health_uri: "/"
+
+    - name: "svc2"
+      listen_port: 80
+      balancer: "RoundRobin"
+
+      hosts:
+          - "example.com"
+          - "example.org"
+
+      upstreams:
+          - host: "http://example.com"
+            health_uri: "/health"
+          - host: "http://example.org"
+            health_uri: "/"
