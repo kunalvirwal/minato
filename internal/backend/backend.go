@@ -12,7 +12,7 @@ type BackendConfig struct {
 }
 
 type BackendState struct {
-	ActiveConnections atomic.Uint64
+	ActiveConnections atomic.Int64
 	Healthy           atomic.Bool
 }
 
@@ -22,6 +22,8 @@ type Backend struct {
 }
 
 func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend {
+
+	// serverURL, _ := url.Parse(URL)
 
 	// If no previous state exist for this server then create one
 	if state == nil {
@@ -58,7 +60,7 @@ func (b *Backend) IsAlive() bool {
 }
 
 // ActiveConnections returns the number of Active client connections to this backend
-func (b *Backend) ActiveConnections() uint64 {
+func (b *Backend) ActiveConnections() int64 {
 	return b.State.ActiveConnections.Load()
 }
 
@@ -69,7 +71,7 @@ func (b *Backend) IncrementConnections() {
 
 // Decrements the number of Active Connections
 func (b *Backend) DecrementConnections() {
-	b.State.ActiveConnections.Add(1)
+	b.State.ActiveConnections.Add(-1)
 }
 
 // Sets the health status of this backend
