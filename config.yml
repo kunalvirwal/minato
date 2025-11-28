@@ -9,9 +9,9 @@ services:
 
       upstreams:
           - host: "http://localhost:8000"
-            health_uri: "/health"
+            health_uri: "/health"            # should start with /
           - host: "http://localhost:9000"
-            health_uri: "/"
+            health_uri: "/"                  # default value
 
     - name: "svc2"
       listen_port: 80

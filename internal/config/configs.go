@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/kunalvirwal/minato/internal/balancer"
 	"github.com/kunalvirwal/minato/internal/types"
@@ -14,7 +15,10 @@ import (
 
 var (
 	// Path to the config file
-	configFile = "./config.yml"
+	configFile = "./config.yaml"
+
+	// Configs parsed from yaml
+	RawConfig *types.Config
 )
 
 // LoadConfig loads the configurations from the config file
@@ -35,9 +39,12 @@ func LoadConfig() {
 	if err := validateConfig(&Cfg); err != nil {
 		utils.LogError(err)
 	}
-	generateRuntimeConfig(&Cfg)
+
+	RawConfig = &Cfg
+
 }
 
+// validateConfig validates the input fields of the provided config file
 func validateConfig(cfg *types.Config) error {
 	// There should be atleast one service defined
 	if len(cfg.Services) == 0 {
@@ -94,11 +101,17 @@ func validateConfig(cfg *types.Config) error {
 				return fmt.Errorf("Duplicate upstream host %s found in service %s", upstream.Host, service.Name)
 			}
 			upstreamHosts[upstream.Host] = true
+
+			// empty health uri defaults to /
+			if upstream.Health_uri == "" {
+				cfg.Services[i].Upstreams[j].Health_uri = "/"
+			}
+
+			// must start with a slash
+			if !strings.HasPrefix(upstream.Health_uri, "/") {
+				cfg.Services[i].Upstreams[j].Health_uri = "/" + upstream.Health_uri
+			}
 		}
 	}
 	return nil
-}
-
-func generateRuntimeConfig(Cfg *types.Config) {
-	fmt.Println(Cfg)
 }

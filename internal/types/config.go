@@ -5,7 +5,7 @@ type Upstream struct {
 	Health_uri string `yaml:"health_uri"`
 }
 
-// Services are the Load Balancers we have to create which are defined in Config.yml
+// Services are the Load Balancers we have to create which are defined in Config.yaml
 type Service struct {
 	Name      string     `yaml:"name"`
 	Port      int        `yaml:"listen_port"`
@@ -14,7 +14,7 @@ type Service struct {
 	Upstreams []Upstream `yaml:"upstreams"`
 }
 
-// config.yml file is parsed to Config struct
+// config.yaml file is parsed to Config struct
 type Config struct {
 	Services []Service `yaml:"services"`
 }
