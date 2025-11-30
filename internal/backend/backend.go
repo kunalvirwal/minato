@@ -2,13 +2,16 @@ package backend
 
 import (
 	"net/http"
+	"net/url"
 	"sync/atomic"
+
+	"github.com/kunalvirwal/minato/internal/proxy"
 )
 
 type BackendConfig struct {
 	Address    string
 	Health_uri string
-	Proxy      http.HandlerFunc
+	Proxy      *proxy.RevProxy
 }
 
 type BackendState struct {
@@ -22,8 +25,7 @@ type Backend struct {
 }
 
 func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend {
-
-	// serverURL, _ := url.Parse(URL)
+	backendURL, _ := url.Parse(URL)
 
 	// If no previous state exist for this server then create one
 	if state == nil {
@@ -35,7 +37,7 @@ func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend 
 	config := &BackendConfig{
 		Address:    URL,
 		Health_uri: Health_uri,
-		Proxy:      func(w http.ResponseWriter, r *http.Request) {}, // [TODO] Replace this with custom proxy implementation
+		Proxy:      proxy.NewRevProxy(backendURL), //[TODO] There might be more inputs
 	}
 
 	return &Backend{
@@ -51,7 +53,7 @@ func (b *Backend) Address() string {
 
 // Serve creates a new proxy request to this upstream backend
 func (b *Backend) Serve(w http.ResponseWriter, r *http.Request) {
-	b.Config.Proxy(w, r)
+	b.Config.Proxy.ServeRequest(w, r)
 }
 
 // IsAlive returns the health status of this backend
