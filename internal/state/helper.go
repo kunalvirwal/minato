@@ -9,11 +9,13 @@ import (
 	"github.com/kunalvirwal/minato/internal/utils"
 )
 
-func GenerateRuntimeResources(Cfg *types.Config) {
+func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 
 	var newConfig = ConfigHolder{
 		Router: make(map[string][]*PathHandler),
 	}
+
+	newPorts := []uint64{}
 
 	for _, svc := range Cfg.Services {
 
@@ -27,11 +29,14 @@ func GenerateRuntimeResources(Cfg *types.Config) {
 
 		// [TODO] append the backends slice to backend registry if you need to
 
+		// The ports needed in the latest config
+		newPorts = append(newPorts, uint64(svc.Port))
+
 		// create loadbalancer for this service
 		lb := balancer.CreateLoadBalancer(svc.Name, svc.Balancer, svc.Port, backends)
 		if lb == nil {
 			utils.LogNewError("Invalid balancing algorythm, nil load balancer recieved")
-			return
+			return newPorts
 		}
 
 		// Add the created loadbalancer to the state struct
@@ -42,10 +47,10 @@ func GenerateRuntimeResources(Cfg *types.Config) {
 				LB:         lb,
 			})
 		}
-
 	}
 	// Atomic Swap
 	CommitConfig(&newConfig)
+	return newPorts
 }
 
 // Atomically swaps the config

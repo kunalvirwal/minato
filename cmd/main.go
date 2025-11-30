@@ -2,7 +2,8 @@ package main
 
 func main() {
 	initConfig()
-	buildRuntimeConfig()
-	initListeners()
+	Ports := buildRuntimeConfig()
+	initListeners(Ports)
 	// [TODO] Health Check Service, Sighup reload
+	<-make(chan struct{})
 }

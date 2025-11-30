@@ -4,25 +4,25 @@ services:
       balancer: "RoundRobin"
 
       hosts:
-          - "http://example.com/"
-          - "http://example.org"
+          - "http://localhost:80/"
+          - "http://127.0.0.1:80"
 
       upstreams:
           - host: "http://localhost:8000"
-            health_uri: "/health"            # should start with /
+            health_uri: "/health" # should start with /
           - host: "http://localhost:9000"
-            health_uri: "/"                  # default value
+            health_uri: "/" # default value
 
     - name: "svc2"
-      listen_port: 80
+      listen_port: 5000
       balancer: "RoundRobin"
 
       hosts:
-          - "http://example.com"
-          - "http://example.org/"
+          - "http://localhost:5000/"
+          - "http://127.0.0.1:5000"
 
       upstreams:
-          - host: "http://example.com"
-            health_uri: "/health"
-          - host: "http://example.org"
-            health_uri: "/"
+          - host: "http://localhost:6000"
+            health_uri: "/health" # should start with /
+          - host: "http://localhost:7000"
+            health_uri: "/" # default value

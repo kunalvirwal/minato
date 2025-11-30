@@ -10,7 +10,12 @@ import (
 
 // [TODO] create mutable []backend registry that persists across config reloads
 
-var RuntimeCfg MinatoCfg
+var RuntimeCfg MinatoCfg = MinatoCfg{
+	Config: atomic.Pointer[ConfigHolder]{},
+	Lm: ListenerManager{
+		Listeners: make(map[uint64]*http.Server),
+	},
+}
 
 // MinatoCfg is a structure to hold the current runtime config
 type MinatoCfg struct {
@@ -37,6 +42,6 @@ type PathHandler struct {
 
 // Keeps a track of port to http.Server mapping
 type ListenerManager struct {
-	servers map[uint64]*http.Server
-	mu      sync.Mutex
+	Listeners map[uint64]*http.Server
+	Mu        sync.Mutex
 }
