@@ -11,12 +11,15 @@ import (
 
 func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 
+	// new config for replacement
 	var newConfig = ConfigHolder{
-		Router: make(map[string][]*PathHandler),
+		Router: make(map[RouteKey]balancer.LoadBalancer),
 	}
 
+	// ports needed in the new config
 	newPorts := []uint64{}
 
+	// iterate over all services defined in config
 	for _, svc := range Cfg.Services {
 
 		// create backends for a service
@@ -42,16 +45,43 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 		// Add the created loadbalancer to the state struct
 		for _, link := range svc.Hosts {
 			parsed, _ := url.Parse(link)
-			newConfig.Router[parsed.Host] = append(newConfig.Router[parsed.Host], &PathHandler{
+			route := RouteKey{
+				Domain:     parsed.Host,
 				PathPrefix: parsed.Path,
-				LB:         lb,
-			})
+				Port:       uint64(svc.Port),
+			}
+			newConfig.Router[route] = lb
 		}
 	}
 	// Atomic Swap
 	CommitConfig(&newConfig)
 	return newPorts
 }
+
+func UpdateRuntimeResources(Cfg *types.Config) []uint64 {
+	// // new config for replacement
+	// var newConfig = ConfigHolder{
+	// 	Router: make(map[string][]*PathHandler),
+	// }
+
+	// // ports needed in the new config
+	// newPorts := []uint64{}
+
+	// oldConfig := RuntimeCfg.Config.Load()
+	// // service updater
+	// for _, svc := range Cfg.Services {
+	// 	// create backends for a service
+	// 	updateService(svc, oldConfig)
+
+	// }
+	///////////////Change
+	return []uint64{}
+}
+
+// func updateService(svc types.Service, oldConfig *ConfigHolder) {
+// 	// first we find the old LB for this service which has the same port and balancer type
+
+// }
 
 // Atomically swaps the config
 func CommitConfig(cfg *ConfigHolder) {

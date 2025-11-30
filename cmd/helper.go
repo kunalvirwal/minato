@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/kunalvirwal/minato/internal/balancer"
 	"github.com/kunalvirwal/minato/internal/config"
 	"github.com/kunalvirwal/minato/internal/state"
 	"github.com/kunalvirwal/minato/internal/utils"
@@ -44,22 +46,43 @@ func initListeners(newPorts []uint64) {
 	}
 
 	// Request handler Logic
-	reqHandler := func(w http.ResponseWriter, r *http.Request) {
-		domain := r.Host
-		// Loads the latest config
-		cfg := state.RuntimeCfg.Config.Load()
-		ph := cfg.Router[domain]
-		if ph == nil {
-			fmt.Println(domain)
-			utils.LogNewError("A request with unrecognised domain recieved, please update config.yml file or DNS ")
-			http.Error(w, "Service not found", http.StatusNotFound)
-			return
-		}
-		for _, pathHandler := range ph {
-			if strings.HasPrefix(r.URL.Path, pathHandler.PathPrefix) {
-				pathHandler.LB.ServeProxy(w, r)
+	reqHandler := func(port uint64) func(w http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+
+			host := r.Host
+			reqPath := r.URL.Path
+
+			if h, _, err := net.SplitHostPort(host); err == nil {
+				host = h
+			}
+
+			// Loads the latest config
+			cfg := state.RuntimeCfg.Config.Load()
+
+			// Find the load balancer for this domain  and port with the longest matching path prefix
+			var LB balancer.LoadBalancer
+			longestPrefix := -1
+
+			for key, lb := range cfg.Router {
+				if key.Domain != host || key.Port != port {
+					continue
+				}
+				// If this routekey has a path prefix matching the request path
+				if strings.HasPrefix(reqPath, key.PathPrefix) {
+					if len(key.PathPrefix) > longestPrefix {
+						LB = lb
+						longestPrefix = len(key.PathPrefix)
+					}
+				}
+			}
+
+			if LB == nil {
+				utils.LogNewError("A request with unrecognised domain or path recieved, please update config.yml file or DNS ")
+				http.Error(w, "Service not found", http.StatusNotFound)
 				return
 			}
+			LB.ServeProxy(w, r)
+
 		}
 	}
 
@@ -70,7 +93,7 @@ func initListeners(newPorts []uint64) {
 		if !exists {
 			srv := &http.Server{
 				Addr:    fmt.Sprintf(":%d", port),
-				Handler: http.HandlerFunc(reqHandler),
+				Handler: http.HandlerFunc(reqHandler(port)),
 			}
 			state.RuntimeCfg.Lm.Listeners[port] = srv
 
@@ -83,4 +106,8 @@ func initListeners(newPorts []uint64) {
 		}
 		// else listener already exists on this port, do nothing
 	}
+}
+
+func updateRuntimeConfig() []uint64 {
+	return state.UpdateRuntimeResources(config.RawConfig)
 }

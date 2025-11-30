@@ -31,13 +31,14 @@ type MinatoCfg struct {
 // This is needed because we can have multiple services which
 // only differ by host path and not the domain.
 type ConfigHolder struct {
-	Router map[string][]*PathHandler
+	Router map[RouteKey]balancer.LoadBalancer
 }
 
-// Stores the path prefix and loadbalancer for this service
-type PathHandler struct {
+// The combination of a URL and port uniquely identifies a loadbalancer
+type RouteKey struct {
+	Domain     string
 	PathPrefix string
-	LB         balancer.LoadBalancer
+	Port       uint64
 }
 
 // Keeps a track of port to http.Server mapping
