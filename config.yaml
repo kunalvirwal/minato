@@ -4,8 +4,8 @@ services:
       balancer: "RoundRobin"
 
       hosts:
-          - "example.com"
-          - "example.org"
+          - "http://example.com/"
+          - "http://example.org"
 
       upstreams:
           - host: "http://localhost:8000"
@@ -18,8 +18,8 @@ services:
       balancer: "RoundRobin"
 
       hosts:
-          - "example.com"
-          - "example.org"
+          - "http://example.com"
+          - "http://example.org/"
 
       upstreams:
           - host: "http://example.com"

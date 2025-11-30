@@ -37,7 +37,7 @@ func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend 
 	config := &BackendConfig{
 		Address:    URL,
 		Health_uri: Health_uri,
-		Proxy:      proxy.NewRevProxy(backendURL), //[TODO] There might be more inputs
+		Proxy:      proxy.NewRevProxy(backendURL),
 	}
 
 	return &Backend{

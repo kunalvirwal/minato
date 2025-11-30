@@ -78,6 +78,34 @@ func validateConfig(cfg *types.Config) error {
 			return fmt.Errorf("No hosts defined for service %s", service.Name)
 		}
 
+		inboundHosts := make(map[string]bool)
+		for j, link := range service.Hosts {
+
+			// remove trailing slash
+			if strings.HasSuffix(link, "/") {
+				link = link[:len(link)-1]
+				cfg.Services[i].Hosts[j] = link
+			}
+
+			// No empty host
+			if link == "" {
+				return fmt.Errorf("Host at index %d in service %s has no host", j, service.Name)
+			}
+
+			// validate the link URL
+			parsed, err := url.Parse(link)
+			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+				return fmt.Errorf("service '%s': Hosts[%d] has invalid host URL '%s'", service.Name, j, link)
+			}
+
+			// No duplicate link hosts
+			if inboundHosts[link] {
+				return fmt.Errorf("Duplicate host %s found in service %s", link, service.Name)
+			}
+			inboundHosts[link] = true
+
+		}
+
 		// There should be atleast one upstream
 		if len(service.Upstreams) == 0 {
 			return fmt.Errorf("No upstreams defined for service %s", service.Name)
@@ -88,6 +116,12 @@ func validateConfig(cfg *types.Config) error {
 			// No empty upstream host
 			if upstream.Host == "" {
 				return fmt.Errorf("Upstream at index %d in service %s has no host", j, service.Name)
+			}
+
+			// remove trailing slash from upstreams
+			if strings.HasSuffix(upstream.Host, "/") {
+				upstream.Host = upstream.Host[:len(upstream.Host)-1]
+				cfg.Services[i].Upstreams[j].Host = upstream.Host
 			}
 
 			// validate the upstream URL

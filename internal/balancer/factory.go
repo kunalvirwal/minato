@@ -16,7 +16,7 @@ type LoadBalancer interface {
 	// Gets the port on which the load balancer is running
 	GetPort() uint64
 
-	// gets the next backend according to the algorythm used
+	// gets the next healthy backend according to the algorythm used
 	GetNextBackend() *backend.Backend
 
 	// forwards the request to the next server
@@ -24,4 +24,15 @@ type LoadBalancer interface {
 
 	// gets the algorythm being used by that load balancer
 	GetAlgorythm() string
+}
+
+func CreateLoadBalancer(svc string, algo string, port int, backends []*backend.Backend) LoadBalancer {
+	if algo == Round_robin {
+		return &RRbalancer{
+			SvcName:  svc,
+			Port:     uint64(port),
+			Backends: backends,
+		}
+	}
+	return nil
 }

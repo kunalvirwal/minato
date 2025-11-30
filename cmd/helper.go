@@ -14,3 +14,16 @@ func initConfig() {
 func buildRuntimeConfig() {
 	state.GenerateRuntimeResources(config.RawConfig)
 }
+
+func initListeners() {
+
+	// 	Config := state.RuntimeCfg.Config.Load()
+
+	// 	reqHandler := func(w http.ResponseWriter, r *http.Request) {
+	// 		domain := req.Host
+	// 	}
+
+	// 	for _, lb := Config.Router {
+
+	// }
+}
