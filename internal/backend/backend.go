@@ -9,7 +9,7 @@ import (
 )
 
 type BackendConfig struct {
-	Address    string
+	URL        *url.URL
 	Health_uri string
 	Proxy      *proxy.RevProxy
 }
@@ -36,7 +36,7 @@ func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend 
 	}
 
 	config := &BackendConfig{
-		Address:    URL,
+		URL:        backendURL,
 		Health_uri: Health_uri,
 		Proxy:      proxy.NewRevProxy(backendURL),
 	}
@@ -49,7 +49,7 @@ func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend 
 
 // Address returns the upstream URI of this backend
 func (b *Backend) Address() string {
-	return b.Config.Address
+	return b.Config.URL.Host + b.Config.URL.Path
 }
 
 // Serve creates a new proxy request to this upstream backend

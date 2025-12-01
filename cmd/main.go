@@ -9,6 +9,7 @@ import (
 func main() {
 	initConfig()
 	Ports := buildRuntimeConfig()
+	startHealthchecks()
 	initListeners(Ports)
 	// [TODO] Health Check Service,
 	sigCh := make(chan os.Signal, 1)

@@ -11,6 +11,7 @@ import (
 
 	"github.com/kunalvirwal/minato/internal/balancer"
 	"github.com/kunalvirwal/minato/internal/config"
+	"github.com/kunalvirwal/minato/internal/healthcheck"
 	"github.com/kunalvirwal/minato/internal/state"
 	"github.com/kunalvirwal/minato/internal/utils"
 )
@@ -114,7 +115,7 @@ func cleanUnusedBackends() {
 	for _, lb := range state.RuntimeCfg.Config.Load().Router {
 		for _, backend := range lb.GetBackends() {
 			key := state.BackendKey{
-				Address:    backend.Config.Address,
+				Address:    backend.Address(),
 				Health_uri: backend.Config.Health_uri,
 			}
 			active[key] = true
@@ -127,4 +128,8 @@ func cleanUnusedBackends() {
 			utils.LogInfo(fmt.Sprintf("Cleaning up unused backend: %v", key.Address))
 		}
 	}
+}
+
+func startHealthchecks() {
+	go healthcheck.StartHealthchecks()
 }

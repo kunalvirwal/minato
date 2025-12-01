@@ -48,7 +48,7 @@ type RouteKey struct {
 
 // The combination of a URL and health check URI uniquely identifies a backend
 type BackendKey struct {
-	Address    string
+	Address    string // Stores "host:port/path"
 	Health_uri string
 }
 

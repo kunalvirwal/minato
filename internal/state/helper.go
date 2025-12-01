@@ -21,13 +21,14 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 
 	// iterate over all services defined in config
 	for _, svc := range Cfg.Services {
-
 		// create backends for a service
 		var backends []*backend.Backend
 		for _, upstream := range svc.Upstreams {
 
+			parsed, _ := url.Parse(upstream.Host)
+
 			b := BackendKey{
-				Address:    upstream.Host,
+				Address:    parsed.Host + parsed.Path,
 				Health_uri: upstream.Health_uri,
 			}
 
