@@ -52,6 +52,7 @@ func validateConfig(cfg *types.Config) error {
 	}
 
 	serviceNames := make(map[string]bool)
+	servicPorts := make(map[int]bool)
 	for i, service := range cfg.Services {
 		// No empty service names
 		if service.Name == "" {
@@ -66,6 +67,11 @@ func validateConfig(cfg *types.Config) error {
 		// Validate port
 		if service.Port <= 0 || service.Port > 65535 {
 			return fmt.Errorf("Invalid port %d in service %s", service.Port, service.Name)
+		}
+
+		// No duplicate service ports
+		if servicPorts[service.Port] {
+			return fmt.Errorf("Duplicate service port found: %d", service.Port)
 		}
 
 		// Validate balancer type

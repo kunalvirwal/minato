@@ -22,7 +22,7 @@ services:
           - "http://127.0.0.1"
 
       upstreams:
-          - host: "http://localhost:6000"
+          - host: "http://localhost:9000"
             health_uri: "/health" # should start with /
           - host: "http://localhost:7000"
             health_uri: "/" # default value

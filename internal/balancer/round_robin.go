@@ -50,3 +50,11 @@ func (lb *RRbalancer) ServeProxy(w http.ResponseWriter, r *http.Request) {
 	utils.LogInfo(fmt.Sprintf("Request forwarded to: %v", backend.Address()))
 	backend.Serve(w, r)
 }
+
+func (lb *RRbalancer) SetBackends(backends []*backend.Backend) {
+	lb.Backends = backends
+}
+
+func (lb *RRbalancer) GetBackends() []*backend.Backend {
+	return lb.Backends
+}

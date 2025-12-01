@@ -32,6 +32,7 @@ func CreateBackend(URL string, Health_uri string, state *BackendState) *Backend 
 		state = &BackendState{}
 		state.ActiveConnections.Store(0)
 		state.Healthy.Store(true)
+
 	}
 
 	config := &BackendConfig{

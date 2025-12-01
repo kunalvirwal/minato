@@ -108,6 +108,23 @@ func initListeners(newPorts []uint64) {
 	}
 }
 
-func updateRuntimeConfig() []uint64 {
-	return state.UpdateRuntimeResources(config.RawConfig)
+func cleanUnusedBackends() {
+	active := make(map[state.BackendKey]bool)
+
+	for _, lb := range state.RuntimeCfg.Config.Load().Router {
+		for _, backend := range lb.GetBackends() {
+			key := state.BackendKey{
+				Address:    backend.Config.Address,
+				Health_uri: backend.Config.Health_uri,
+			}
+			active[key] = true
+		}
+	}
+
+	for key := range state.RuntimeCfg.BackendRegistry {
+		if !active[key] {
+			delete(state.RuntimeCfg.BackendRegistry, key)
+			utils.LogInfo(fmt.Sprintf("Cleaning up unused backend: %v", key.Address))
+		}
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/kunalvirwal/minato/internal/backend"
 	"github.com/kunalvirwal/minato/internal/balancer"
 )
 
@@ -15,6 +16,7 @@ var RuntimeCfg MinatoCfg = MinatoCfg{
 	Lm: ListenerManager{
 		Listeners: make(map[uint64]*http.Server),
 	},
+	BackendRegistry: make(map[BackendKey]*backend.Backend),
 }
 
 // MinatoCfg is a structure to hold the current runtime config
@@ -25,6 +27,9 @@ type MinatoCfg struct {
 
 	// Keeps track of all HTTP servers running
 	Lm ListenerManager
+
+	// Keeps track of backend states across config reloads
+	BackendRegistry map[BackendKey]*backend.Backend
 }
 
 // ConfigHolder stores the domain to PathHandler mapping.
@@ -39,6 +44,12 @@ type RouteKey struct {
 	Domain     string
 	PathPrefix string
 	Port       uint64
+}
+
+// The combination of a URL and health check URI uniquely identifies a backend
+type BackendKey struct {
+	Address    string
+	Health_uri string
 }
 
 // Keeps a track of port to http.Server mapping

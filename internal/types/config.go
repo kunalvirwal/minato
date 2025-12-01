@@ -6,6 +6,7 @@ type Upstream struct {
 }
 
 // Services are the Load Balancers we have to create which are defined in Config.yaml
+// Host here refers to complete inbound URL including path prefix and has been used for generalization
 type Service struct {
 	Name      string     `yaml:"name"`
 	Port      int        `yaml:"listen_port"`

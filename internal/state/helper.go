@@ -25,12 +25,23 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 		// create backends for a service
 		var backends []*backend.Backend
 		for _, upstream := range svc.Upstreams {
-			// [TODO] Later replace this nil to backend.state if this backend existed prior to reload
-			backend := backend.CreateBackend(upstream.Host, upstream.Health_uri, nil)
-			backends = append(backends, backend)
-		}
 
-		// [TODO] append the backends slice to backend registry if you need to
+			b := BackendKey{
+				Address:    upstream.Host,
+				Health_uri: upstream.Health_uri,
+			}
+
+			if existingBackend, exists := RuntimeCfg.BackendRegistry[b]; exists {
+				// Reuse existing backend state
+				backends = append(backends, existingBackend)
+
+			} else {
+				// Create a new backend
+				backend := backend.CreateBackend(upstream.Host, upstream.Health_uri, nil)
+				backends = append(backends, backend)
+				RuntimeCfg.BackendRegistry[b] = backend
+			}
+		}
 
 		// The ports needed in the latest config
 		newPorts = append(newPorts, uint64(svc.Port))
@@ -57,31 +68,6 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 	CommitConfig(&newConfig)
 	return newPorts
 }
-
-func UpdateRuntimeResources(Cfg *types.Config) []uint64 {
-	// // new config for replacement
-	// var newConfig = ConfigHolder{
-	// 	Router: make(map[string][]*PathHandler),
-	// }
-
-	// // ports needed in the new config
-	// newPorts := []uint64{}
-
-	// oldConfig := RuntimeCfg.Config.Load()
-	// // service updater
-	// for _, svc := range Cfg.Services {
-	// 	// create backends for a service
-	// 	updateService(svc, oldConfig)
-
-	// }
-	///////////////Change
-	return []uint64{}
-}
-
-// func updateService(svc types.Service, oldConfig *ConfigHolder) {
-// 	// first we find the old LB for this service which has the same port and balancer type
-
-// }
 
 // Atomically swaps the config
 func CommitConfig(cfg *ConfigHolder) {
