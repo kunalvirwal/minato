@@ -7,23 +7,31 @@ import (
 )
 
 func main() {
-	initConfig()
-	Ports := buildRuntimeConfig()
-	startHealthchecks()
-	initListeners(Ports)
-	// [TODO] Health Check Service,
+	err := initConfig()
+	if err == nil {
+		updateMinato(true)
+	}
+
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGHUP)
 
-	for {
-		sig := <-sigCh
-		switch sig {
-		case syscall.SIGHUP:
-			initConfig()
-			Ports := buildRuntimeConfig()
-			cleanUnusedBackends()
-			initListeners(Ports)
+	for sig := range sigCh {
+		if sig == syscall.SIGHUP {
+			err := initConfig()
+			if err == nil {
+				updateMinato(false)
+			}
 		}
 	}
 
+}
+
+func updateMinato(coldstart bool) {
+	Ports := buildRuntimeConfig()
+	if coldstart {
+		startHealthchecks()
+	} else {
+		cleanUnusedBackends()
+	}
+	initListeners(Ports)
 }

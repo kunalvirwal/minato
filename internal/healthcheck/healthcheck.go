@@ -14,14 +14,20 @@ import (
 func StartHealthchecks() {
 	ticker := time.NewTicker(10 * time.Second)
 
+	// Initial healthcheck run
+	state.RuntimeCfg.Mu.RLock()
 	for key, backend := range state.RuntimeCfg.BackendRegistry {
 		go runHealthCheck(key, backend)
 	}
+	state.RuntimeCfg.Mu.RUnlock()
 
+	// Periodic healthcheck runs
 	for range ticker.C {
+		state.RuntimeCfg.Mu.RLock()
 		for key, backend := range state.RuntimeCfg.BackendRegistry {
 			go runHealthCheck(key, backend)
 		}
+		state.RuntimeCfg.Mu.RUnlock()
 	}
 
 }
@@ -34,8 +40,9 @@ func runHealthCheck(key state.BackendKey, backend *backend.Backend) {
 
 	// TCP test happens to host:port, it is a layer 4 protocol so it doesn't need http
 	conn, err := net.DialTimeout("tcp", backend.Config.URL.Host, TCPconnectionTimeout)
-	if err != nil {
-		utils.LogCustom(utils.Red, "Healthcheck-test", fmt.Sprintf("TCP Healthcheck failed on %v", key.Address))
+	if err != nil && backend.IsAlive() {
+		// utils.LogCustom(utils.Red, "Healthcheck-test", fmt.Sprintf("TCP Healthcheck failed on %v", key.Address))
+		utils.LogCustom(utils.Red, "Healthcheck", fmt.Sprintf("%v went offline", key.Address))
 		backend.SetHealth(false)
 		return
 	}
@@ -47,10 +54,10 @@ func runHealthCheck(key state.BackendKey, backend *backend.Backend) {
 	}
 	res, err := client.Get(health_url)
 	if err != nil || res.StatusCode != http.StatusOK {
-		utils.LogCustom(utils.Red, "Healthcheck-test", fmt.Sprintf("HTTP Healthcheck failed on %v", key.Address))
+		// utils.LogCustom(utils.Red, "Healthcheck-test", fmt.Sprintf("HTTP Healthcheck failed on %v", key.Address))
 		if backend.IsAlive() {
 			backend.SetHealth(false)
-			utils.LogCustom(utils.Red, "Healthcheck", fmt.Sprintf("%v went offline", key.Address))
+			utils.LogCustom(utils.Red, "Healthcheck", fmt.Sprintf("%v failing healthchecks", key.Address))
 		}
 		return
 	}

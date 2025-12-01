@@ -22,10 +22,11 @@ var (
 )
 
 // LoadConfig loads the configurations from the config file
-func LoadConfig() {
+func LoadConfig() error {
 	f, err := os.Open(configFile)
 	if err != nil {
 		utils.LogNewError("Unable to read config file: " + err.Error())
+		return err
 	}
 	defer f.Close()
 
@@ -33,15 +34,16 @@ func LoadConfig() {
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&Cfg)
 	if err != nil {
-		utils.LogError(err)
-		os.Exit(1)
+		utils.LogNewError("Unable to decode yaml: " + err.Error())
+		return nil
 	}
 	if err := validateConfig(&Cfg); err != nil {
 		utils.LogError(err)
+		return err
 	}
 
 	RawConfig = &Cfg
-
+	return nil
 }
 
 // validateConfig validates the input fields of the provided config file

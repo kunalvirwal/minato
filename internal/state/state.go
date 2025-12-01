@@ -30,6 +30,9 @@ type MinatoCfg struct {
 
 	// Keeps track of backend states across config reloads
 	BackendRegistry map[BackendKey]*backend.Backend
+
+	// RWMutex to protect BackendRegistry
+	Mu sync.RWMutex
 }
 
 // ConfigHolder stores the domain to PathHandler mapping.

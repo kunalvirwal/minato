@@ -17,8 +17,8 @@ import (
 )
 
 // initConfig loads all the configs from Config.yaml
-func initConfig() {
-	config.LoadConfig()
+func initConfig() error {
+	return config.LoadConfig()
 }
 
 // buildRuntimeConfig uses the RawConfig to generate servers and loadbalancers
@@ -63,7 +63,6 @@ func initListeners(newPorts []uint64) {
 			// Find the load balancer for this domain  and port with the longest matching path prefix
 			var LB balancer.LoadBalancer
 			longestPrefix := -1
-
 			for key, lb := range cfg.Router {
 				if key.Domain != host || key.Port != port {
 					continue
@@ -121,6 +120,9 @@ func cleanUnusedBackends() {
 			active[key] = true
 		}
 	}
+
+	state.RuntimeCfg.Mu.Lock()
+	defer state.RuntimeCfg.Mu.Unlock()
 
 	for key := range state.RuntimeCfg.BackendRegistry {
 		if !active[key] {

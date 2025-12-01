@@ -32,6 +32,7 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 				Health_uri: upstream.Health_uri,
 			}
 
+			RuntimeCfg.Mu.Lock()
 			if existingBackend, exists := RuntimeCfg.BackendRegistry[b]; exists {
 				// Reuse existing backend state
 				backends = append(backends, existingBackend)
@@ -42,6 +43,7 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 				backends = append(backends, backend)
 				RuntimeCfg.BackendRegistry[b] = backend
 			}
+			RuntimeCfg.Mu.Unlock()
 		}
 
 		// The ports needed in the latest config
