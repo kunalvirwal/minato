@@ -35,7 +35,7 @@ func StartHealthchecks() {
 func runHealthCheck(key state.BackendKey, backend *backend.Backend) {
 	// Fast TCP check
 	TCPconnectionTimeout := 1 * time.Second
-	HTTPconnectionTimeout := 3 * time.Second
+	HTTPconnectionTimeout := 5 * time.Second
 	health_url := "http://" + backend.Address() + key.Health_uri
 
 	// TCP test happens to host:port, it is a layer 4 protocol so it doesn't need http

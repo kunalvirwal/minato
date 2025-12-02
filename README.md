@@ -159,13 +159,13 @@ services:
 
 #### Cache Settings
 
-| Option          | Type   | Default   | Description                                 |
-| --------------- | ------ | --------- | ------------------------------------------- |
-| `enabled`       | bool   | `false`   | Enable response caching                     |
-| `max_body_size` | int    | `1048576` | Maximum response body size to cache (bytes) |
-| `capacity`      | int    | `100`     | Maximum number of cached responses          |
-| `type`          | string | `"LRU"`   | Cache eviction policy (`LRU` or `LFU`)      |
-| `ttl`           | int    | `300`     | Cache entry time-to-live (seconds)          |
+| Option          | Type   | Description                                 |
+| --------------- | ------ | ------------------------------------------- |
+| `enabled`       | bool   | Enable response caching                     |
+| `max_body_size` | int    | Maximum response body size to cache (bytes) |
+| `capacity`      | int    | Maximum number of cached responses          |
+| `type`          | string | Cache eviction policy (`LRU` or `LFU`)      |
+| `ttl`           | int    | Cache entry time-to-live (seconds)          |
 
 #### Service Settings
 

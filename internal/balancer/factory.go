@@ -29,13 +29,20 @@ type LoadBalancer interface {
 	// Gets slice of active Backends
 	GetBackends() []*backend.Backend
 
-	// Sets Backend slice
-	SetBackends(backends []*backend.Backend)
+	// // Sets Backend slice
+	// SetBackends(backends []*backend.Backend)
 }
 
 func CreateLoadBalancer(svc string, algo string, port int, backends []*backend.Backend) LoadBalancer {
 	if algo == Round_robin {
 		return &RRbalancer{
+			SvcName:  svc,
+			Port:     uint64(port),
+			Backends: backends,
+		}
+	}
+	if algo == Least_conn {
+		return &LCbalancer{
 			SvcName:  svc,
 			Port:     uint64(port),
 			Backends: backends,

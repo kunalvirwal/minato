@@ -1,6 +1,6 @@
 # Cache config
 cache:
-    enabled: true # default: false
+    enabled: false # default: false
     max_body_size: 1048576 # in bytes
     capacity: 100 # number of response entries for GET and HEAD, default: 100, should be > 0
     type: "LRU" # "LRU" , "LFU" is a future implementation
@@ -10,7 +10,7 @@ cache:
 services:
     - name: "svc1"
       listen_port: 80
-      balancer: "RoundRobin"
+      balancer: "RoundRobin" # "RoundRobin" or "LeastConnections"
 
       hosts:
           - "http://localhost/"
@@ -24,7 +24,7 @@ services:
 
     - name: "svc2"
       listen_port: 5000
-      balancer: "RoundRobin"
+      balancer: "LeastConnections"
 
       hosts:
           - "http://localhost/"
@@ -33,5 +33,5 @@ services:
       upstreams:
           - host: "http://localhost:8000"
             health_uri: "/health"
-          - host: "http://localhost:6000"
+          - host: "http://localhost:9000"
             health_uri: "/"
