@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/kunalvirwal/minato/internal/balancer"
-	"github.com/kunalvirwal/minato/internal/types"
+	"github.com/kunalvirwal/minato/internal/cache"
 	"github.com/kunalvirwal/minato/internal/utils"
 	"gopkg.in/yaml.v3"
 )
@@ -18,7 +18,7 @@ var (
 	configFile = "./config.yaml"
 
 	// Configs parsed from yaml
-	RawConfig *types.Config
+	RawConfig *Config
 )
 
 // LoadConfig loads the configurations from the config file
@@ -30,7 +30,7 @@ func LoadConfig() error {
 	}
 	defer f.Close()
 
-	var Cfg types.Config
+	var Cfg Config
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&Cfg)
 	if err != nil {
@@ -47,7 +47,27 @@ func LoadConfig() error {
 }
 
 // validateConfig validates the input fields of the provided config file
-func validateConfig(cfg *types.Config) error {
+func validateConfig(cfg *Config) error {
+
+	// Validate cache config
+	if cfg.Cache.Type == "" {
+		return errors.New("No cache type defined in config file. Can use LFU or LRU.")
+	}
+
+	// Validate cache type
+	if cfg.Cache.Type != cache.LRUenum && cfg.Cache.Type != cache.LFUenum {
+		return errors.New("Invalid cache type defined in config file")
+	}
+
+	// Validate cache TTL
+	if cfg.Cache.TTL == 0 {
+		return errors.New("Cache TTL must be greater than 0")
+	}
+
+	if cfg.Cache.Capacity == 0 {
+		return errors.New("Cache Capacity must be greater than 0")
+	}
+
 	// There should be atleast one service defined
 	if len(cfg.Services) == 0 {
 		return errors.New("No services defined in config file")

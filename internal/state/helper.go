@@ -5,11 +5,12 @@ import (
 
 	"github.com/kunalvirwal/minato/internal/backend"
 	"github.com/kunalvirwal/minato/internal/balancer"
-	"github.com/kunalvirwal/minato/internal/types"
+	"github.com/kunalvirwal/minato/internal/cache"
+	"github.com/kunalvirwal/minato/internal/config"
 	"github.com/kunalvirwal/minato/internal/utils"
 )
 
-func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
+func GenerateRuntimeResources(Cfg *config.Config) []uint64 {
 
 	// new config for replacement
 	var newConfig = ConfigHolder{
@@ -67,6 +68,14 @@ func GenerateRuntimeResources(Cfg *types.Config) []uint64 {
 			newConfig.Router[route] = lb
 		}
 	}
+	// Create cache
+	if Cfg.Cache.Enabled {
+		Cache := cache.CreateCache(Cfg.Cache.Type, Cfg.Cache.Capacity, Cfg.Cache.MaxSize, Cfg.Cache.TTL)
+		newConfig.Cache = Cache
+	} else {
+		newConfig.Cache = nil
+	}
+
 	// Atomic Swap
 	CommitConfig(&newConfig)
 	return newPorts

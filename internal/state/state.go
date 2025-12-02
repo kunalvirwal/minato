@@ -7,6 +7,7 @@ import (
 
 	"github.com/kunalvirwal/minato/internal/backend"
 	"github.com/kunalvirwal/minato/internal/balancer"
+	"github.com/kunalvirwal/minato/internal/cache"
 )
 
 // [TODO] create mutable []backend registry that persists across config reloads
@@ -40,6 +41,7 @@ type MinatoCfg struct {
 // only differ by host path and not the domain.
 type ConfigHolder struct {
 	Router map[RouteKey]balancer.LoadBalancer
+	Cache  cache.Cache
 }
 
 // The combination of a URL and port uniquely identifies a loadbalancer

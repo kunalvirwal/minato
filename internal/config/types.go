@@ -1,4 +1,4 @@
-package types
+package config
 
 type Upstream struct {
 	Host       string `yaml:"host"`
@@ -15,7 +15,16 @@ type Service struct {
 	Upstreams []Upstream `yaml:"upstreams"`
 }
 
+type Cache struct {
+	Enabled  bool   `yaml:"enabled"`
+	MaxSize  uint64 `yaml:"max_size"`
+	Capacity uint64 `yaml:"capacity"`
+	Type     string `yaml:"type"`
+	TTL      uint64 `yaml:"ttl"`
+}
+
 // config.yaml file is parsed to Config struct
 type Config struct {
+	Cache    Cache     `yaml:"cache"`
 	Services []Service `yaml:"services"`
 }

@@ -40,10 +40,12 @@ func runHealthCheck(key state.BackendKey, backend *backend.Backend) {
 
 	// TCP test happens to host:port, it is a layer 4 protocol so it doesn't need http
 	conn, err := net.DialTimeout("tcp", backend.Config.URL.Host, TCPconnectionTimeout)
-	if err != nil && backend.IsAlive() {
-		// utils.LogCustom(utils.Red, "Healthcheck-test", fmt.Sprintf("TCP Healthcheck failed on %v", key.Address))
-		utils.LogCustom(utils.Red, "Healthcheck", fmt.Sprintf("%v went offline", key.Address))
-		backend.SetHealth(false)
+	if err != nil {
+		if backend.IsAlive() {
+			// utils.LogCustom(utils.Red, "Healthcheck-test", fmt.Sprintf("TCP Healthcheck failed on %v", key.Address))
+			utils.LogCustom(utils.Red, "Healthcheck", fmt.Sprintf("%v went offline", key.Address))
+			backend.SetHealth(false)
+		}
 		return
 	}
 	conn.Close()
