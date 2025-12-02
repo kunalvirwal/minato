@@ -18,9 +18,9 @@ services:
 
       upstreams:
           - host: "http://localhost:6000"
-            health_uri: "/health" # should start with /
+            health_uri: "/health"
           - host: "http://localhost:7000"
-            health_uri: "/" # default value
+            health_uri: "/"
 
     - name: "svc2"
       listen_port: 5000
@@ -32,6 +32,6 @@ services:
 
       upstreams:
           - host: "http://localhost:8000"
-            health_uri: "/health" # should start with /
-          - host: "http://localhost:9000"
-            health_uri: "/" # default value
+            health_uri: "/health"
+          - host: "http://localhost:6000"
+            health_uri: "/"

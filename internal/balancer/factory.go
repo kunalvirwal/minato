@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/kunalvirwal/minato/internal/backend"
+	"github.com/kunalvirwal/minato/internal/cache"
 )
 
 const (
@@ -20,7 +21,7 @@ type LoadBalancer interface {
 	GetNextBackend() *backend.Backend
 
 	// forwards the request to the next server
-	ServeProxy(w http.ResponseWriter, r *http.Request)
+	ServeProxy(w http.ResponseWriter, r *http.Request) *cache.Response
 
 	// gets the algorythm being used by that load balancer
 	GetAlgorythm() string

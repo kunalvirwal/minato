@@ -24,6 +24,9 @@ type entry struct {
 	expiresAt int64
 }
 
+// Get fetches an entry from the cache. Returns false if not found or expired.
+// Note: Get does not implement deep copy of Response.
+// Caller should not modify the returned Response due to risking cache mutation.
 func (c *LRUCache) Get(key string) (Response, bool) {
 	c.Mu.Lock()
 	defer c.Mu.Unlock()

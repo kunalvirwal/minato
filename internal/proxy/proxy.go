@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kunalvirwal/minato/internal/cache"
 	"github.com/kunalvirwal/minato/internal/utils"
 )
 
@@ -121,7 +122,7 @@ func CreateTransport() *http.Transport {
 }
 
 // This function does not support 1xx response codes or switching of protocols
-func (p *RevProxy) ServeRequest(w http.ResponseWriter, r *http.Request) {
+func (p *RevProxy) ServeRequest(w http.ResponseWriter, r *http.Request) *cache.Response {
 
 	// For incoming requests, ctx cancels when connection to client closes.
 	// In that case the outbound request should also be cancelled.
@@ -187,7 +188,7 @@ func (p *RevProxy) ServeRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		utils.LogNewError("http: proxy error:" + err.Error())
 		w.WriteHeader(http.StatusBadGateway)
-		return
+		return nil
 	}
 
 	// res.Body is never nil
@@ -197,21 +198,34 @@ func (p *RevProxy) ServeRequest(w http.ResponseWriter, r *http.Request) {
 	removeHopByHopHeaders(res.Header)
 
 	// Copy headers from res.Header to w
-	for key, headers := range res.Header {
-		for _, header := range headers {
-			w.Header().Add(key, header)
-		}
-	}
+	cloneHeader(w.Header(), res.Header)
 
 	// Send the status code
 	w.WriteHeader(res.StatusCode)
 
 	// Copy the response body to the client
-	p.copyResponse(w, res)
+	bodyCopy := p.copyResponse(w, res)
+
+	return &cache.Response{
+		StatusCode: res.StatusCode,
+		Header:     cloneHeader(make(http.Header, len(res.Header)), res.Header),
+		Body:       bodyCopy,
+	}
 
 }
 
-func (p *RevProxy) copyResponse(w http.ResponseWriter, res *http.Response) {
+func cloneHeader(dst, h http.Header) http.Header {
+	for k, vv := range h {
+		vvCopy := make([]string, len(vv))
+		copy(vvCopy, vv)
+		dst[k] = vvCopy
+	}
+	return dst
+}
+
+func (p *RevProxy) copyResponse(w http.ResponseWriter, res *http.Response) []byte {
+	var out []byte
+
 	var continuousFlush bool = false
 	resType := res.Header.Get("Content-Type")
 	baseCT, _, _ := mime.ParseMediaType(resType)
@@ -228,7 +242,7 @@ func (p *RevProxy) copyResponse(w http.ResponseWriter, res *http.Response) {
 		flusher, ok = w.(http.Flusher)
 		if !ok {
 			utils.LogNewError("ResponseWriter does not support streaming (Flush) ")
-			return
+			return nil
 		}
 		// SSE buffers are long lived so we create a new one instead of fetching from pool
 		buf = make([]byte, 4096)
@@ -246,12 +260,18 @@ func (p *RevProxy) copyResponse(w http.ResponseWriter, res *http.Response) {
 			nw, err := w.Write(buf[:n])
 			if err != nil {
 				utils.LogNewError("Error writing to response: " + err.Error())
-				return
+				return nil
 			}
 			if nw != n {
 				utils.LogNewError("Less bytes written to response than read from body: " + io.ErrShortWrite.Error())
-				return
+				return nil
 			}
+
+			// For normal responses, accumulate the response body for caching to be returned
+			if !continuousFlush {
+				out = append(out, buf[:n]...)
+			}
+
 			// Flush after every write
 			if continuousFlush && flusher != nil {
 				flusher.Flush()
@@ -260,12 +280,12 @@ func (p *RevProxy) copyResponse(w http.ResponseWriter, res *http.Response) {
 		if err != nil {
 			if err != io.EOF {
 				utils.LogNewError("Error reading response body: " + err.Error())
-				return
+				return nil
 			}
 			break
 		}
 	}
-
+	return out
 }
 
 // Remove Hop-by-hop headers

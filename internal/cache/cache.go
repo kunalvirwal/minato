@@ -1,6 +1,9 @@
 package cache
 
-import "net/http"
+import (
+	"net/http"
+	"strconv"
+)
 
 const (
 	LRUenum = "LRU"
@@ -38,4 +41,15 @@ func CreateCache(cacheType string, capacity uint64, maxsize uint64, ttl uint64) 
 	}
 	// Future Implementation for LFU can be added here
 	return nil
+}
+
+// Generate key for Cache
+// Build cache key takes query parameters into account while building the key,
+// so if the request includes time dependent query parameters, then cache might never hit.
+func BuildCacheKey(r *http.Request, port int) string {
+	key := r.Method + "_" + strconv.Itoa(port) + "_" + r.Host + r.URL.Path
+	if r.URL.RawQuery != "" {
+		key += "?" + r.URL.RawQuery
+	}
+	return key
 }

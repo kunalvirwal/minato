@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"sync/atomic"
 
+	"github.com/kunalvirwal/minato/internal/cache"
 	"github.com/kunalvirwal/minato/internal/proxy"
 )
 
@@ -53,8 +54,8 @@ func (b *Backend) Address() string {
 }
 
 // Serve creates a new proxy request to this upstream backend
-func (b *Backend) Serve(w http.ResponseWriter, r *http.Request) {
-	b.Config.Proxy.ServeRequest(w, r)
+func (b *Backend) Serve(w http.ResponseWriter, r *http.Request) *cache.Response {
+	return b.Config.Proxy.ServeRequest(w, r)
 }
 
 // IsAlive returns the health status of this backend

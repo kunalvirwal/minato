@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/kunalvirwal/minato/internal/backend"
+	"github.com/kunalvirwal/minato/internal/cache"
 	"github.com/kunalvirwal/minato/internal/utils"
 )
 
@@ -38,17 +39,17 @@ func (lb *RRbalancer) GetNextBackend() *backend.Backend {
 	return nil // no healthy backend found
 }
 
-func (lb *RRbalancer) ServeProxy(w http.ResponseWriter, r *http.Request) {
+func (lb *RRbalancer) ServeProxy(w http.ResponseWriter, r *http.Request) *cache.Response {
 	backend := lb.GetNextBackend()
 	if backend == nil {
 		http.Error(w, "Service Unavailable: No healthy servers available", http.StatusServiceUnavailable)
 		utils.LogNewError(fmt.Sprintf("Request Dropped %v: No healthy servers available", lb.SvcName))
-		return
+		return nil
 	}
 	backend.IncrementConnections()
 	defer backend.DecrementConnections()
 	utils.LogInfo(fmt.Sprintf("Request forwarded to: %v", backend.Address()))
-	backend.Serve(w, r)
+	return backend.Serve(w, r)
 }
 
 func (lb *RRbalancer) SetBackends(backends []*backend.Backend) {

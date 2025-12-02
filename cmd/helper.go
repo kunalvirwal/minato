@@ -6,10 +6,12 @@ import (
 	"net"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/kunalvirwal/minato/internal/balancer"
+	"github.com/kunalvirwal/minato/internal/cache"
 	"github.com/kunalvirwal/minato/internal/config"
 	"github.com/kunalvirwal/minato/internal/healthcheck"
 	"github.com/kunalvirwal/minato/internal/state"
@@ -81,8 +83,57 @@ func initListeners(newPorts []uint64) {
 				http.Error(w, "Service not found", http.StatusNotFound)
 				return
 			}
-			LB.ServeProxy(w, r)
 
+			var runtimeCache cache.Cache
+			key := ""
+			if r.Method == http.MethodGet || r.Method == http.MethodHead {
+				runtimeCache = state.RuntimeCfg.Config.Load().Cache
+				if runtimeCache != nil {
+					key = cache.BuildCacheKey(r, int(port))
+					if resp, found := runtimeCache.Get(key); found {
+						utils.LogCustom(utils.Cyan, "Cache", (fmt.Sprintf("Cache hit for %v", key)))
+						writeCachedResponse(w, resp)
+						return
+					}
+				}
+			}
+			resp := LB.ServeProxy(w, r)
+
+			// Store in cache if applicable
+			if runtimeCache != nil && resp != nil && key != "" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
+				hdr := resp.Header
+				noCache := false
+				ttl := runtimeCache.GetTTL()
+				utils.LogCustom(utils.Cyan, "Cache", fmt.Sprintf("Storing cache with key %v", key))
+				if cc := hdr.Get("Cache-Control"); cc != "" {
+
+					parts := strings.Split(cc, ",")
+					for i := range parts {
+						p := strings.TrimSpace(parts[i])
+						if p == "no-store" || p == "no-cache" || p == "private" {
+							noCache = true
+						}
+
+						if n, found := strings.CutPrefix(p, "max-age="); found {
+							n, err := strconv.Atoi(n)
+							if err == nil {
+								if n == 0 {
+									noCache = true
+								} else {
+									ttl = int64(n)
+								}
+							}
+						}
+					}
+
+				}
+
+				if !noCache {
+					expiresAt := time.Now().Unix() + ttl
+					runtimeCache.Set(key, *resp, expiresAt)
+					utils.LogInfo(fmt.Sprintf("Response cached for key %v", key))
+				}
+			}
 		}
 	}
 
@@ -105,6 +156,21 @@ func initListeners(newPorts []uint64) {
 			}(srv, port)
 		}
 		// else listener already exists on this port, do nothing
+	}
+}
+
+func writeCachedResponse(w http.ResponseWriter, resp cache.Response) {
+	for k, vv := range resp.Header {
+		for _, v := range vv {
+			w.Header().Add(k, v)
+		}
+	}
+	w.WriteHeader(resp.StatusCode)
+	if len(resp.Body) > 0 {
+		_, err := w.Write(resp.Body)
+		if err != nil {
+			utils.LogNewError("Error writing cached response body: " + err.Error())
+		}
 	}
 }
 
