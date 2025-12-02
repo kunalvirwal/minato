@@ -3,7 +3,7 @@ cache:
     enabled: true # default: false
     max_body_size: 1048576 # in bytes
     capacity: 100 # number of response entries for GET and HEAD, default: 100, should be > 0
-    type: "LRU" # "LRU" or "LFU"
+    type: "LRU" # "LRU" , "LFU" is a future implementation
     ttl: 300 # in seconds, should be > 0, absolute TTL for each cache entry
 
 # Services config

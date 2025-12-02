@@ -3,6 +3,8 @@ package cache
 import (
 	"net/http"
 	"strconv"
+
+	"github.com/kunalvirwal/minato/internal/utils"
 )
 
 const (
@@ -40,6 +42,9 @@ func CreateCache(cacheType string, capacity uint64, maxsize uint64, ttl uint64) 
 		}
 	}
 	// Future Implementation for LFU can be added here
+	if cacheType == LFUenum {
+		utils.LogNewError("LFU cache isn't implemented yet! Use LRU cache.")
+	}
 	return nil
 }
 
