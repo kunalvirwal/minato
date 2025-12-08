@@ -1,6 +1,6 @@
 # Cache config
 cache:
-    enabled: false # default: false
+    enabled: true # default: false
     max_body_size: 1048576 # in bytes
     capacity: 100 # number of response entries for GET and HEAD, default: 100, should be > 0
     type: "LRU" # "LRU" , "LFU" is a future implementation

@@ -110,8 +110,8 @@ func CreateTransport() *http.Transport {
 		Proxy:                  nil, // can change from nil to http.ProxyFromEnvironment if needed
 		DialContext:            dialer.DialContext,
 		ForceAttemptHTTP2:      true,
-		MaxIdleConnsPerHost:    10,
-		MaxConnsPerHost:        100,
+		MaxIdleConnsPerHost:    100,
+		MaxConnsPerHost:        0, // 0 = unlimited
 		IdleConnTimeout:        90 * time.Second,
 		TLSHandshakeTimeout:    10 * time.Second,
 		ExpectContinueTimeout:  1 * time.Second,

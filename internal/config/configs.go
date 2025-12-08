@@ -74,7 +74,8 @@ func validateConfig(cfg *Config) error {
 	}
 
 	serviceNames := make(map[string]bool)
-	servicPorts := make(map[int]bool)
+	// Track RouteKeys to prevent duplicate domain+path+port combinations
+	routeKeys := make(map[string]bool)
 	for i, service := range cfg.Services {
 		// No empty service names
 		if service.Name == "" {
@@ -89,11 +90,6 @@ func validateConfig(cfg *Config) error {
 		// Validate port
 		if service.Port <= 0 || service.Port > 65535 {
 			return fmt.Errorf("Invalid port %d in service %s", service.Port, service.Name)
-		}
-
-		// No duplicate service ports
-		if servicPorts[service.Port] {
-			return fmt.Errorf("Duplicate service port found: %d", service.Port)
 		}
 
 		// Validate balancer type
@@ -131,6 +127,13 @@ func validateConfig(cfg *Config) error {
 				return fmt.Errorf("Duplicate host %s found in service %s", link, service.Name)
 			}
 			inboundHosts[link] = true
+
+			// Validate unique RouteKey (domain + path + port combination)
+			routeKey := fmt.Sprintf("%s|%s|%d", parsed.Host, parsed.Path, service.Port)
+			if routeKeys[routeKey] {
+				return fmt.Errorf("Duplicate route found: domain '%s' with path '%s' on port %d is already defined in another service", parsed.Host, parsed.Path, service.Port)
+			}
+			routeKeys[routeKey] = true
 
 		}
 
